@@ -689,6 +689,14 @@ void StatusLedStrip::render_rainbow_marquee_effect() {
   }
 }
 
+void StatusLedStrip::set_brightness_percent(int percent) {
+  brightness_percent_ = ai_keyboard::clamp_led_brightness_percent(percent);
+}
+
+std::uint8_t StatusLedStrip::brightness_percent() const {
+  return brightness_percent_;
+}
+
 esp_err_t StatusLedStrip::flush() {
   if (!ready()) {
     return ESP_ERR_INVALID_STATE;
@@ -696,7 +704,13 @@ esp_err_t StatusLedStrip::flush() {
 
   std::array<rmt_symbol_word_t, kWs2812SymbolCount> symbols = {};
   for (std::size_t index = 0; index < leds_.size(); ++index) {
-    const auto& color = leds_[index];
+    // Brightness is applied only here, on the outgoing frame, so every effect
+    // keeps its relative colours and the stored frame stays at full scale.
+    const Rgb color{
+        ai_keyboard::scale_led_channel(leds_[index].red, brightness_percent_),
+        ai_keyboard::scale_led_channel(leds_[index].green, brightness_percent_),
+        ai_keyboard::scale_led_channel(leds_[index].blue, brightness_percent_),
+    };
     auto* pixel = &symbols[index * 24U];
     encode_ws2812_byte(color.green, pixel);
     encode_ws2812_byte(color.red, pixel + 8U);

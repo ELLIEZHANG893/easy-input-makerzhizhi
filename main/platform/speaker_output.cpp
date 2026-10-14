@@ -14,6 +14,7 @@
 #include "esp_log.h"
 #include "keyboard/board_pins.h"
 #include "keyboard/speaker_audio_contract.h"
+#include "keyboard/speaker_volume.h"
 
 namespace easy_input {
 namespace {
@@ -1220,6 +1221,9 @@ esp_err_t SpeakerOutput::prepare_asset_first_frame(
              static_cast<unsigned long>(generation));
     return ESP_ERR_INVALID_RESPONSE;
   }
+  // Boot asset volume: scale decoded PCM only; I2S and power are untouched.
+  ai_keyboard::scale_pcm_samples(
+      output, *output_samples, ai_keyboard::kDefaultBootSoundVolumePercent);
   std::fill(
       output + *output_samples, output + output_capacity, 0);
   return cancelled(generation) ? ESP_ERR_INVALID_STATE : ESP_OK;
@@ -1248,6 +1252,8 @@ esp_err_t SpeakerOutput::play_asset_frames(
                static_cast<unsigned long>(generation));
       return ESP_FAIL;
     }
+    ai_keyboard::scale_pcm_samples(
+        frame, decoded_samples, ai_keyboard::kDefaultBootSoundVolumePercent);
     std::fill(
         frame + decoded_samples, frame + frame_capacity, 0);
     const auto write_result =

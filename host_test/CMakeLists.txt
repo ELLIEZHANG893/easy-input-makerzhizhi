@@ -49,6 +49,8 @@ add_library(easy_input_keyboard_core
   ../components/keyboard/src/input_test.cpp
   ../components/keyboard/src/keyboard_snapshot_delivery.cpp
   ../components/keyboard/src/keymap.cpp
+  ../components/keyboard/src/led_brightness.cpp
+  ../components/keyboard/src/speaker_volume.cpp
   ../components/keyboard/src/platform_selection.cpp
   ../components/keyboard/src/peripheral_power_lease.cpp
   ../components/keyboard/src/power_cycle.cpp
@@ -306,6 +308,8 @@ add_keyboard_host_test(host_action_key_bindings_tests)
 add_keyboard_host_test(host_action_protocol_tests)
 add_keyboard_host_test(keyboard_snapshot_delivery_tests)
 add_keyboard_host_test(keymap_tests)
+add_keyboard_host_test(led_brightness_tests)
+add_keyboard_host_test(speaker_volume_tests)
 add_keyboard_host_test(platform_selection_tests)
 add_keyboard_host_test(peripheral_power_lease_tests)
 add_keyboard_host_test(power_cycle_tests)

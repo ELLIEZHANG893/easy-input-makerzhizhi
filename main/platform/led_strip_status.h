@@ -11,6 +11,7 @@
 #include "keyboard/boot_led_sequence.h"
 #include "keyboard/input_feedback.h"
 #include "keyboard/keymap.h"
+#include "keyboard/led_brightness.h"
 
 namespace easy_input {
 
@@ -55,6 +56,10 @@ class StatusLedStrip {
   void update(std::uint32_t now_ms);
   bool next_update_deadline_ms(std::uint32_t now_ms,
                                std::uint32_t* deadline_ms) const;
+  // Global brightness for all 5 WS2812 pixels, 0-100 (saturated). Applied by
+  // scaling RGB values when a frame is sent; the next flush uses the new value.
+  void set_brightness_percent(int percent);
+  std::uint8_t brightness_percent() const;
 
  private:
   void show_feedback(const ai_keyboard::InputActivityFeedback& feedback,
@@ -94,6 +99,7 @@ class StatusLedStrip {
   bool agent_status_active_ = false;
   bool agent_status_rendered_ = false;
   bool idle_rendered_ = false;
+  std::uint8_t brightness_percent_ = ai_keyboard::kDefaultLedBrightnessPercent;
 };
 
 }  // namespace easy_input
