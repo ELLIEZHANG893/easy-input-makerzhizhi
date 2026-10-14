@@ -121,6 +121,10 @@ add_keyboard_host_test(held_keyboard_state_tests)
 add_keyboard_host_test(hid_report_queue_tests)
 add_keyboard_host_test(hid_keycode_tests)
 add_keyboard_host_test(host_action_capability_status_tests)
+target_compile_definitions(
+  host_action_capability_status_tests
+  PRIVATE EASY_INPUT_REPO_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/.."
+)
 add_keyboard_host_test(input_feedback_tests)
 add_keyboard_host_test(input_test_tests)
 
