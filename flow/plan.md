@@ -4,6 +4,7 @@
 
 ## 里程碑
 
+- [x] 完成烧录前只读审计：云端与本机烧录副本源码树一致、工作区干净、`git diff --check` 通过；`main` 以来 27 个文件全部可解释（灯光、音量两项练习 + 测试 + flow）；引脚、BOOT／电源、目标／分区／有效配置、USB／BLE 身份与 HID／GATT、Host Action 合同、隐私均 PASS；托管依赖与构建产物对得上锁文件和元数据；`SAFE_TO_REQUEST_FLASH=YES`；未访问设备、未烧录。
 - [x] 完成软件侧总验收：重新发现并执行全部宿主测试 62/62（相对公开基线 60 多出的两项来自灯光与音量练习），四类覆盖（协议、八键、单通道路由、能力状态）有测试函数证据；ESP-IDF v5.5.5 / esp32s3 / v2 默认构建通过，0 警告，App 1,640,832 bytes，factory 分区余量 48%；未烧录、未运行 App。
 - [x] 完成 Host Action v1 能力声明与状态字节预算核验：确认 4 个发出点均写布尔 `"host_action_v1":true`；按真实取值枚举 15 个实际发布变体（配置确认、USB 状态、普通阶段回退、诊断、电量、扬声器诊断、BLE 兜底），最大最终 512 字节，均不超限，未收缩；`0x04`／`0x05` 分工以 `static_assert` 固定；只改宿主测试，定向 7/7、完整 62/62 通过；未构建、未烧录。
 - [x] 完成 Host Action v1 接入现有 App Command 发送链路核验：确认按键 → `event_for_action()` → `dispatch_firmware_event()` → `route_for_firmware_event()` → USB 或 BLE 单通道 → 同一 `encode_host_action_v1()` → `send_app_command_report()` 已完整存在；补齐共享编码、事件分发、路由三处宿主测试，生产代码零改动；定向 7/7、完整宿主 62/62 通过，变异检查 2/8 → 8/8；未构建固件、未烧录。
@@ -41,6 +42,7 @@
 | T15 · Host Action v1 接入现有 App Command 发送链路核验 | 固件开发 Agent／`project-flow-cy` | T02 合同、T06 接入记录、T12—T14、现有分发与适配层 | `flow/tasks/T15-Host-Action-v1-App-Command发送链路接入核验.md` | 调用链逐步有代码位置；USB／BLE 分支内容一致且参数顺序固定；Host Action 不进按住型键盘通道、先选路后单通道发送；路由与固定文字／App 命令一致；不增加能力声明，不改 HID／GATT、身份、硬件或分区 |
 | T16 · Host Action v1 能力声明与状态字节预算核验 | 固件开发 Agent／`project-flow-cy` | T02 合同、T07 能力声明、`publish_config_status()` 与 BLE／USB 状态发布路径 | `flow/tasks/T16-Host-Action-v1-能力声明与状态字节预算核验.md` | 每个实际发布变体恰好一个布尔能力字段且在 `capabilities` 内；逐变体最终字节数 ≤ 512 有测试输出；未提高上限、未删必要信息；不改协议、HID／GATT、身份、硬件或分区 |
 | T17 · 软件侧总验收 | 固件开发 Agent／`project-flow-cy`／`esp-idf-cy` | 全部宿主测试、仓库版本化声明（`dependencies.lock`、`esp_hid` 版本锁、根 `CMakeLists.txt`） | `flow/tasks/T17-软件侧总验收.md` | 发现数 = 执行数 = 通过数且失败 0；四类覆盖可定位；按仓库声明完成默认构建并记录工具版本、产物、分区余量、警告；测试／构建／烧录／真实功能四类证据分开 |
+| T18 · 烧录前只读审计 | 固件开发 Agent／`project-flow-cy`／`easyinput-board-cy` | 课程锚点、`main..HEAD` 真实差异、两份副本的 Git 状态与忽略内容、板级合同 | `flow/tasks/T18-烧录前只读审计.md` | 每处变化可解释；禁止项全为 PASS；生成物与托管依赖对得上锁文件和构建元数据；不改文件、不访问设备 |
 
 ## 实时进展 / 交接棒
 
