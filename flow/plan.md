@@ -4,6 +4,7 @@
 
 ## 里程碑
 
+- [x] 完成 Host Action v1 八键共用解析与旧动作回归：确认 KEY1—KEY8 共用 `parse_binding()`；新增五种动作在八键上轮转的混合配置测试与默认 Keymap 不含 Host Action 的测试，生产代码零改动；定向 6/6、完整宿主 62/62 通过；示例 UUID 仅在宿主测试；未构建固件、未接 USB／BLE、未烧录。
 - [x] 完成 Host Action v1 纯逻辑验证与测试缺口补齐：已有实现满足合同，生产代码零改动；补齐过长、仅前缀、错误分隔符、前缀大写及 Keymap 层不规范值不生成事件的宿主测试；定向 6/6、完整宿主 62/62 通过，变异检查证明新增用例有效；未构建固件、未接 USB／BLE、未烧录。
 - [x] 完成 Host Action v1 固定合同复核：在已实现的基线上逐项对照配置格式、规范小写 UUID 拒绝策略、`0x11`／`0x05`／`0`／`1`／`36` 字节布局、`[40..62]` 归零余量、`0x04` 状态响应、按下一次、USB／BLE 同内容单通道、能力声明与 512 字节 BLE 状态预算，未发现冲突；本节点只更新 `flow/`，未改代码、未测试、未构建、未烧录。
 - [x] 建立 Host Action v1 完整基线与学员起点：固化三层边界，验证 Maker `main`，创建只移除 Host Action 的课程分支与两个固定标签，并在隔离现场完成生产公共代码同步验证；不引入 OTA、不推送、不烧录。
@@ -33,6 +34,7 @@
 | T11 · Host Action v1 课程分支与公共基线同步 | 维护 Agent／`project-flow-cy`／`git-workflow-cy`／`course-design-cy`／`easyinput-board-cy`／`esp-idf-cy` | 已确认的三层边界、Maker 完整基线、产品侧进入 OTA 前的公共固件事实 | `flow/tasks/T11-Host-Action-v1-课程分支与公共基线同步.md` | `main` 与 starter 仅有课程目标差异；BLE 修复保留、OTA 排除；两边宿主测试和 ESP-IDF 5.5.5 构建通过；分支与固定标签可追溯；不推送、不烧录 |
 | T12 · Host Action v1 固定合同复核 | 审计 Agent／`project-flow-cy` | T02 冻结合同、当前已实现基线与 T03—T11 记录 | `flow/tasks/T12-Host-Action-v1-固定合同复核.md` | 每个固定字段有代码证据；无编号或容器冲突；单通道不双发；BLE 状态 ≤512 字节有测试约束；只改 `flow/` |
 | T13 · Host Action v1 纯逻辑验证与测试缺口补齐 | 固件开发 Agent／`project-flow-cy` | T02 合同、T12 复核、现有纯逻辑实现与宿主测试 | `flow/tasks/T13-Host-Action-v1-纯逻辑验证与测试缺口补齐.md` | 先验证后补缺；只改 `host_test/`；定向与完整宿主测试通过；新增用例经变异检查有效；不接 USB／BLE、不烧录 |
+| T14 · Host Action v1 八键共用解析与旧动作回归 | 固件开发 Agent／`project-flow-cy` | T02 合同、T04 八键测试、现有配置解析与旧动作测试 | `flow/tasks/T14-Host-Action-v1-八键共用解析与旧动作回归.md` | 八键共用解析有代码证据；八键 × 五种动作逐键断言；旧动作回归通过；示例 UUID 不进生产；不改 USB／BLE、能力声明、硬件、分区或身份 |
 
 ## 实时进展 / 交接棒
 
