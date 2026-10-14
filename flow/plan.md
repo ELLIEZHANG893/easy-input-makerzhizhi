@@ -4,6 +4,7 @@
 
 ## 里程碑
 
+- [x] 完成 Host Action v1 接入现有 App Command 发送链路核验：确认按键 → `event_for_action()` → `dispatch_firmware_event()` → `route_for_firmware_event()` → USB 或 BLE 单通道 → 同一 `encode_host_action_v1()` → `send_app_command_report()` 已完整存在；补齐共享编码、事件分发、路由三处宿主测试，生产代码零改动；定向 7/7、完整宿主 62/62 通过，变异检查 2/8 → 8/8；未构建固件、未烧录。
 - [x] 完成 Host Action v1 八键共用解析与旧动作回归：确认 KEY1—KEY8 共用 `parse_binding()`；新增五种动作在八键上轮转的混合配置测试与默认 Keymap 不含 Host Action 的测试，生产代码零改动；定向 6/6、完整宿主 62/62 通过；示例 UUID 仅在宿主测试；未构建固件、未接 USB／BLE、未烧录。
 - [x] 完成 Host Action v1 纯逻辑验证与测试缺口补齐：已有实现满足合同，生产代码零改动；补齐过长、仅前缀、错误分隔符、前缀大写及 Keymap 层不规范值不生成事件的宿主测试；定向 6/6、完整宿主 62/62 通过，变异检查证明新增用例有效；未构建固件、未接 USB／BLE、未烧录。
 - [x] 完成 Host Action v1 固定合同复核：在已实现的基线上逐项对照配置格式、规范小写 UUID 拒绝策略、`0x11`／`0x05`／`0`／`1`／`36` 字节布局、`[40..62]` 归零余量、`0x04` 状态响应、按下一次、USB／BLE 同内容单通道、能力声明与 512 字节 BLE 状态预算，未发现冲突；本节点只更新 `flow/`，未改代码、未测试、未构建、未烧录。
@@ -35,6 +36,7 @@
 | T12 · Host Action v1 固定合同复核 | 审计 Agent／`project-flow-cy` | T02 冻结合同、当前已实现基线与 T03—T11 记录 | `flow/tasks/T12-Host-Action-v1-固定合同复核.md` | 每个固定字段有代码证据；无编号或容器冲突；单通道不双发；BLE 状态 ≤512 字节有测试约束；只改 `flow/` |
 | T13 · Host Action v1 纯逻辑验证与测试缺口补齐 | 固件开发 Agent／`project-flow-cy` | T02 合同、T12 复核、现有纯逻辑实现与宿主测试 | `flow/tasks/T13-Host-Action-v1-纯逻辑验证与测试缺口补齐.md` | 先验证后补缺；只改 `host_test/`；定向与完整宿主测试通过；新增用例经变异检查有效；不接 USB／BLE、不烧录 |
 | T14 · Host Action v1 八键共用解析与旧动作回归 | 固件开发 Agent／`project-flow-cy` | T02 合同、T04 八键测试、现有配置解析与旧动作测试 | `flow/tasks/T14-Host-Action-v1-八键共用解析与旧动作回归.md` | 八键共用解析有代码证据；八键 × 五种动作逐键断言；旧动作回归通过；示例 UUID 不进生产；不改 USB／BLE、能力声明、硬件、分区或身份 |
+| T15 · Host Action v1 接入现有 App Command 发送链路核验 | 固件开发 Agent／`project-flow-cy` | T02 合同、T06 接入记录、T12—T14、现有分发与适配层 | `flow/tasks/T15-Host-Action-v1-App-Command发送链路接入核验.md` | 调用链逐步有代码位置；USB／BLE 分支内容一致且参数顺序固定；Host Action 不进按住型键盘通道、先选路后单通道发送；路由与固定文字／App 命令一致；不增加能力声明，不改 HID／GATT、身份、硬件或分区 |
 
 ## 实时进展 / 交接棒
 

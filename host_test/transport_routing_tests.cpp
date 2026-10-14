@@ -58,6 +58,30 @@ void host_actions_prefer_usb_and_keep_the_same_route_without_ble() {
          FirmwareTransportRoute::UsbFirst);
 }
 
+// Host Action has no transport policy of its own: for every BLE state it gets
+// exactly the route already used by fixed text and App commands, and the route
+// never depends on the action value (so a UUID cannot steer delivery).
+void host_actions_share_the_existing_single_channel_route() {
+  for (const bool ble_connected : {false, true}) {
+    const auto fixed_text = ai_keyboard::route_for_firmware_event(
+        FirmwareEvent{FirmwareEventKind::FixedText, "hello"}, ble_connected);
+    const auto app_command = ai_keyboard::route_for_firmware_event(
+        FirmwareEvent{FirmwareEventKind::AppCommand, "history"},
+        ble_connected);
+    for (const char* value : {
+             "host_action:123e4567-e89b-12d3-a456-426614174000",
+             "host_action:ffffffff-ffff-ffff-ffff-ffffffffffff",
+             "",
+         }) {
+      const auto host_action = ai_keyboard::route_for_firmware_event(
+          FirmwareEvent{FirmwareEventKind::HostAction, value}, ble_connected);
+      assert(host_action == FirmwareTransportRoute::UsbFirst);
+      assert(host_action == fixed_text);
+      assert(host_action == app_command);
+    }
+  }
+}
+
 void usb_endpoint_lifetime_treats_every_mount_callback_as_a_new_endpoint() {
   UsbEndpointLifetime lifetime;
   assert(!lifetime.mounted());
@@ -719,6 +743,7 @@ int main() {
   fixed_text_prefers_usb_when_ble_is_not_connected();
   app_commands_prefer_usb_even_when_ble_is_connected();
   host_actions_prefer_usb_and_keep_the_same_route_without_ble();
+  host_actions_share_the_existing_single_channel_route();
   usb_endpoint_lifetime_treats_every_mount_callback_as_a_new_endpoint();
   usb_unmount_remount_is_visible_when_intermediate_state_is_not_sampled();
   usb_endpoint_epoch_wraps_without_exposing_zero();

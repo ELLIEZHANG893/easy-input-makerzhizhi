@@ -1,3 +1,4 @@
+#include <array>
 #include <cassert>
 #include <cctype>
 #include <cstddef>
@@ -3588,6 +3589,109 @@ void host_action_uses_shared_encoding_and_existing_single_channel_route() {
   }
 }
 
+// T15: the physical key path reaches the single-channel dispatcher, Host
+// Action stays out of the held-keyboard latch path, and both adapters hand the
+// same encoded bytes to the existing App Command builder in the same order.
+void host_action_reaches_app_command_chain_with_identical_usb_ble_content() {
+  const auto app = read_source("main/app_main.cpp");
+  const auto usb = read_source("main/platform/usb_hid.cpp");
+  const auto ble = read_source("main/platform/ble_hid.cpp");
+
+  // Physical key -> keymap event -> dispatcher.
+  const auto input = section(app,
+                             "bool handle_input_event(",
+                             "void load_stored_config(");
+  const auto keymap_event = input.find(
+      "app->config_state.keymap().action_for(event.input)");
+  const auto to_event = input.find("ai_keyboard::event_for_action(action,",
+                                   keymap_event);
+  const auto to_dispatch = input.find(
+      "dispatch_firmware_event(app, event.input, firmware_event);", to_event);
+  assert(keymap_event != std::string::npos);
+  assert(to_event != std::string::npos);
+  assert(to_dispatch != std::string::npos);
+
+  // Dispatcher: only HID key down/up use the held-keyboard latch; Host Action
+  // falls through to the shared route selection before any transport call.
+  const auto dispatch = section(app,
+                                "void dispatch_firmware_event",
+                                "void dispatch_encoder_press_click");
+  const auto held_path = section(dispatch,
+                                 "if (event.kind == ai_keyboard::FirmwareEventKind::HidKeyDown ||",
+                                 "const auto route =");
+  assert(held_path.find("HostAction") == std::string::npos);
+  const auto route = dispatch.find(
+      "ai_keyboard::route_for_firmware_event(event, app->ble.connected())");
+  const auto first_usb = dispatch.find("app->usb.send_firmware_event");
+  const auto first_ble = dispatch.find("app->ble.send_firmware_event");
+  assert(route != std::string::npos);
+  assert(route < first_usb && route < first_ble);
+  // Every transport call is immediately followed by a return path: one event,
+  // one transport. Exactly one USB call and two mutually exclusive BLE calls
+  // (BleFirst branch and USB-absent branch).
+  assert(count_occurrences(dispatch, "app->usb.send_firmware_event") == 1);
+  assert(count_occurrences(dispatch, "app->ble.send_firmware_event") == 2);
+
+  // Adapters: the HostAction case is the same code apart from the transport
+  // owner argument, so USB and BLE carry the same content.
+  const auto host_case_begin = "case ai_keyboard::FirmwareEventKind::HostAction: {";
+  const auto host_case_end = "case ai_keyboard::FirmwareEventKind::AppCommand:";
+  auto usb_case = without_ascii_whitespace(
+      section(usb, "bool UsbHidTransport::send_firmware_event_for_epoch",
+              "bool UsbHidTransport::tap_hotkey"));
+  auto ble_case = without_ascii_whitespace(
+      section(ble, "bool BleHidTransport::send_firmware_event_for_owner",
+              "bool BleHidTransport::send_keyboard_report"));
+  usb_case = section(usb_case, without_ascii_whitespace(host_case_begin),
+                     without_ascii_whitespace(host_case_end));
+  ble_case = section(ble_case, without_ascii_whitespace(host_case_begin),
+                     without_ascii_whitespace(host_case_end));
+  const std::string usb_owner = "expected_epoch);";
+  const std::string ble_owner = "expected_owner);";
+  const auto usb_owner_at = usb_case.rfind(usb_owner);
+  const auto ble_owner_at = ble_case.rfind(ble_owner);
+  assert(usb_owner_at != std::string::npos);
+  assert(ble_owner_at != std::string::npos);
+  assert(usb_case.substr(0, usb_owner_at) == ble_case.substr(0, ble_owner_at));
+  assert(usb_case.substr(usb_owner_at + usb_owner.size()) ==
+         ble_case.substr(ble_owner_at + ble_owner.size()));
+
+  // Argument order matches send_app_command_report(kind, chunk, total, data,
+  // len, owner); the data pointer comes from the encoded report, never from
+  // the config string, and the status kind 0x04 is not referenced.
+  const std::array<const char*, 5> ordered_args{{
+      "report.payload[0],",
+      "report.payload[1],",
+      "report.payload[2],",
+      "report.payload.data()+ai_keyboard::kHostActionV1HeaderLen,",
+      "report.payload[3],",
+  }};
+  std::size_t cursor = usb_case.find("send_app_command_report(");
+  assert(cursor != std::string::npos);
+  for (const auto* arg : ordered_args) {
+    cursor = usb_case.find(arg, cursor);
+    assert(cursor != std::string::npos);
+  }
+  assert(usb_case.find("event.value.data()") == std::string::npos);
+  assert(usb_case.find("kStatusResponseCommandKind") == std::string::npos);
+  assert(usb_case.find("0x04") == std::string::npos);
+
+  // Both App Command builders lay out the header in the same order.
+  const auto usb_builder = section(
+      usb, "bool UsbHidTransport::push_app_command_report_locked",
+      "bool UsbHidTransport::send_fixed_text_command");
+  const auto ble_builder = section(
+      ble, "bool BleHidTransport::send_app_command_report",
+      "bool BleHidTransport::send_fixed_text_command");
+  for (const auto* builder : {&usb_builder, &ble_builder}) {
+    const auto k = builder->find("report[0] = command_kind;");
+    const auto c = builder->find("report[1] = chunk_index;");
+    const auto t = builder->find("report[2] = total_chunks;");
+    const auto l = builder->find("report[3] = static_cast<std::uint8_t>(len);");
+    assert(k != std::string::npos && k < c && c < t && t < l);
+  }
+}
+
 void config_status_publication_uses_shared_bounded_ble_encoders() {
   const auto ble = read_source("main/platform/ble_hid.cpp");
   const auto publish = section(
@@ -3646,6 +3750,7 @@ int main() {
   peripheral_power_lifecycle_is_system_owned_and_ordered();
   runtime_logs_do_not_emit_user_or_device_identifiers();
   host_action_uses_shared_encoding_and_existing_single_channel_route();
+  host_action_reaches_app_command_chain_with_identical_usb_ble_content();
   config_status_publication_uses_shared_bounded_ble_encoders();
   return 0;
 }

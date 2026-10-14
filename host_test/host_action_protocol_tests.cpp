@@ -84,11 +84,54 @@ void encodes_the_frozen_v1_report_without_the_config_prefix() {
   }
 }
 
+// Models the argument split used by both USB and BLE adapters
+// (payload[0], payload[1], payload[2], payload.data() + header, payload[3])
+// and the zero-initialised 63-byte App Command builder they share. The
+// rebuilt container must equal the encoded report byte for byte, so neither
+// transport can add, drop or reorder bytes relative to the shared encoding.
+std::array<std::uint8_t, ai_keyboard::kHostActionV1PayloadLen>
+rebuild_app_command_container(std::uint8_t command_kind,
+                              std::uint8_t chunk_index,
+                              std::uint8_t total_chunks,
+                              const std::uint8_t* data,
+                              std::size_t len) {
+  std::array<std::uint8_t, ai_keyboard::kHostActionV1PayloadLen> report{};
+  report[0] = command_kind;
+  report[1] = chunk_index;
+  report[2] = total_chunks;
+  report[3] = static_cast<std::uint8_t>(len);
+  for (std::size_t index = 0; index < len; ++index) {
+    report[ai_keyboard::kHostActionV1HeaderLen + index] = data[index];
+  }
+  return report;
+}
+
+void adapter_argument_split_rebuilds_the_identical_container() {
+  for (const char* action : {
+           "host_action:123e4567-e89b-12d3-a456-426614174000",
+           "host_action:00000000-0000-0000-0000-000000000000",
+           "host_action:ffffffff-ffff-ffff-ffff-ffffffffffff",
+       }) {
+    ai_keyboard::HostActionV1Report report;
+    assert(ai_keyboard::encode_host_action_v1(action, &report));
+    assert(report.report_id == 0x11);
+    const auto& p = report.payload;
+    assert(p[3] == ai_keyboard::kHostActionV1UuidLen);
+    const auto rebuilt = rebuild_app_command_container(
+        p[0], p[1], p[2], p.data() + ai_keyboard::kHostActionV1HeaderLen,
+        p[3]);
+    assert(rebuilt == p);
+    assert(rebuilt[0] == 0x05);
+    assert(rebuilt[0] != ai_keyboard::kStatusResponseCommandKind);
+  }
+}
+
 }  // namespace
 
 int main() {
   accepts_canonical_lowercase_uuid_without_semantic_uuid_restrictions();
   rejects_noncanonical_uuid_and_leaves_output_untouched();
   encodes_the_frozen_v1_report_without_the_config_prefix();
+  adapter_argument_split_rebuilds_the_identical_container();
   return 0;
 }
