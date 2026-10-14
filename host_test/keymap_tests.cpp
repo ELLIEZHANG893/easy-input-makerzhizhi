@@ -1,3 +1,4 @@
+#include <array>
 #include <cassert>
 #include <string>
 
@@ -128,6 +129,28 @@ void host_actions_emit_one_event_on_press_and_none_on_release() {
   assert(up.value.empty());
 }
 
+void noncanonical_host_action_values_never_emit_an_event() {
+  // Defense in depth: even if a non-canonical value reached the keymap, the
+  // event layer must fail closed instead of normalizing or forwarding it.
+  const std::array<std::string, 3> invalid{{
+      "host_action:123E4567-e89b-12d3-a456-426614174000",
+      "host_action:123e4567-e89b-12d3-a456-4266141740000",
+      "host_action:123e4567_e89b-12d3-a456-426614174000",
+  }};
+  for (const auto& value : invalid) {
+    ai_keyboard::Action action;
+    action.kind = ActionKind::HostAction;
+    action.host_action = value;
+    for (const auto phase : {ai_keyboard::InputPhase::Pressed,
+                             ai_keyboard::InputPhase::Released}) {
+      const auto event = ai_keyboard::event_for_action(
+          action, phase, "RightMeta", "AltGr");
+      assert(event.kind == FirmwareEventKind::None);
+      assert(event.value.empty());
+    }
+  }
+}
+
 void custom_hotkey_actions_emit_press_and_release_events() {
   const ai_keyboard::Action action{ActionKind::Hotkey, "Ctrl+Alt+Space"};
 
@@ -238,6 +261,7 @@ int main() {
   disabled_actions_emit_no_event();
   fixed_text_actions_emit_text_event_on_press_only();
   host_actions_emit_one_event_on_press_and_none_on_release();
+  noncanonical_host_action_values_never_emit_an_event();
   custom_hotkey_actions_emit_press_and_release_events();
   semantic_actions_resolve_for_each_target_platform();
   default_eight_keys_emit_exact_hid_for_both_platforms();

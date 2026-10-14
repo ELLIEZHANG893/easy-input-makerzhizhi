@@ -28,6 +28,14 @@ void rejects_noncanonical_uuid_and_leaves_output_untouched() {
       "host_action:123e456-7e89b-12d3-a456-426614174000",
       "host_action:123e4567-e89b-12d3-a456-42661417400g",
       "host-action:123e4567-e89b-12d3-a456-426614174000",
+      // Too long by one character.
+      "host_action:123e4567-e89b-12d3-a456-4266141740000",
+      // Prefix only: zero-length UUID.
+      "host_action:",
+      // Correct positions but a non-hyphen separator.
+      "host_action:123e4567_e89b-12d3-a456-426614174000",
+      // The prefix is not case-normalized either.
+      "HOST_ACTION:123e4567-e89b-12d3-a456-426614174000",
   };
 
   for (const auto& action : rejected) {

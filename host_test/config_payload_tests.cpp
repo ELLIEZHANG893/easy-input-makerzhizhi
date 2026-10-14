@@ -523,6 +523,8 @@ void rejects_noncanonical_host_action_uuids_without_normalizing() {
       "host_action:123e4567-e89b-12d3-a456-42661417400",
       "host_action:123e456-7e89b-12d3-a456-426614174000",
       "host_action:123e4567-e89b-12d3-a456-42661417400g",
+      "host_action:123e4567-e89b-12d3-a456-4266141740000",
+      "HOST_ACTION:123e4567-e89b-12d3-a456-426614174000",
   };
 
   for (const auto& action_value : invalid) {
